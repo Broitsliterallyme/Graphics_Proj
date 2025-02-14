@@ -33,7 +33,8 @@ void main()
     vec2 uv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
     uv.x *= iResolution.x / iResolution.y; // Correct aspect ratio
     vec3 rayDirCameraSpace = normalize(vec3(uv, -1.0 / tan(radians(fov / 2.0))));
-    vec3 rayDirWorldSpace = normalize((viewMatrix * vec4(rayDirCameraSpace, 0.0)).xyz);
+    mat3 Inverse_View_Matrix = mat3(transpose(viewMatrix));
+    vec3 rayDirWorldSpace = normalize(Inverse_View_Matrix * rayDirCameraSpace);
 
     vec3 rayOrigin = cameraPos;
 

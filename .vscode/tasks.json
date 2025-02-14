@@ -8,16 +8,16 @@
             "args": [
                 "-g",
                 "-std=c++17",
-                "-IC:/Users/Asus/Documents/voxel2'/include",
-                "-LC:/Users/Asus/Documents/voxel2'/lib",
-                "C:/Users/Asus/Documents/voxel2'/src/main.cpp",
-                "C:/Users/Asus/Documents/voxel2'/src/glad.c",
+                "-IC:/Users/Asus/Documents/Graphics_Proj/include",
+                "-LC:/Users/Asus/Documents/Graphics_Proj/lib",
+                "C:/Users/Asus/Documents/Graphics_Proj/src/main.cpp",
+                "C:/Users/Asus/Documents/Graphics_Proj/src/glad.c",
                 "-lglfw3dll",
                 "-o",
-                "C:/Users/Asus/Documents/voxel2'/cutable.exe"
+                "C:/Users/Asus/Documents/Graphics_Proj/cutable.exe"
             ],
             "options": {
-                "cwd": "C:/Users/Asus/Documents/voxel2'"
+                "cwd": "C:/Users/Asus/Documents/Graphics_Proj"
             },            
             "problemMatcher": [
                 "$gcc"

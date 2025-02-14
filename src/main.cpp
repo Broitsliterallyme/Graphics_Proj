@@ -170,8 +170,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-    yaw -= xoffset;
-    pitch -= yoffset;
+    yaw += xoffset;
+    pitch += yoffset;
 
     if (pitch > 89.0f)
         pitch = 89.0f;

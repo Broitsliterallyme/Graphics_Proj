@@ -99,16 +99,23 @@ int main()
 
         ourShader.use();
 
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glm::mat4 view = glm::lookAt(glm::vec3(0.0f , 0.0f , 0.0f), cameraFront, cameraUp);
 
         ourShader.setMat4("viewMatrix", view);
         ourShader.setVec3("cameraPos", cameraPos);
         ourShader.setFloat("fov", fov);
         ourShader.setVec2("iResolution", SCR_WIDTH, SCR_HEIGHT);
-        ourShader.setVec3("cubeCentre", glm::vec3(0.0f, 0.0f, 0.0f));
+        ourShader.setVec3("cubeCentre", glm::vec3(0.0f, 0.05f, -2.0f));
         ourShader.setVec3("cameraFront", cameraFront);
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::rotate(trans , glm::radians(65.0f) , glm::vec3(1.0f, 0.0f, 1.0f));
+        ourShader.setMat4("rot", trans);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+        // For debugging:
+        // std::cout<<cameraPos.x<<" "<<cameraPos.y<<" "<<cameraPos.z<<std::endl;
+        // std::cout<<"Camera Front"<<std::endl;
+        //std::cout<<cameraFront.x<<" "<<cameraFront.y<<" "<<cameraFront.z<<std::endl;
 
         glfwSwapBuffers(window);
         glfwPollEvents();

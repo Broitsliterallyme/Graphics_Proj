@@ -18,6 +18,8 @@ const unsigned int SCR_HEIGHT = 600;
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  5.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+glm::vec3 newPos = cameraPos;
+bool collision = false;
 
 bool firstMouse = true;
 float yaw = -90.0f;
@@ -68,6 +70,28 @@ int main()
          1.0f,  1.0f
     };
 
+    glm::vec3 translations[100];
+    // translations[0] = glm::vec3(0.0f, 0.0f, 0.0f);
+    // translations[1] = glm::vec3(2.5f, 2.5f, 0.0f);
+    int index = 0;
+    float offset = 2.5f;
+    for(int y = -5; y < 5; y += 1)
+    {
+        for(int x = -5; x < 5; x += 1)
+        {
+            glm::vec2 translation;
+            translation.x = (float)x  * offset;
+            translation.y = (float)y  * offset;
+            translations[index++] = glm::vec3(translation,0);
+        }
+    }
+    
+    glm::vec3 minBound = glm::vec3(-11.0f, -11.0f, 1.0f);
+    glm::vec3 maxBound = glm::vec3(9.0f, 9.0f, -1.0f);
+
+
+    glm::vec3 size_half = glm::vec3(1.0f);
+
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -94,24 +118,46 @@ int main()
         glfwSetCursorPosCallback(window, mouse_callback);
         glfwSetScrollCallback(window, scrool_callback);
 
+        //for showing fps on top
+        float fps = 1.0f / deltaTime;
+        std::string title = "Ray Marching Cube | FPS: " + std::to_string(fps);
+        glfwSetWindowTitle(window, title.c_str());
+
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ourShader.use();
+        for(unsigned int i = 0; i < 100; i++)
+        {
+            ourShader.setVec3((("cubeCentres[" + std::to_string(i) + "]")), translations[i]);
+        } 
 
         glm::mat4 view = glm::lookAt(glm::vec3(0.0f , 0.0f , 0.0f), cameraFront, cameraUp);
-
+        ourShader.setInt("numCubes", 100);
         ourShader.setMat4("viewMatrix", view);
         ourShader.setVec3("cameraPos", cameraPos);
         ourShader.setFloat("fov", fov);
         ourShader.setVec2("iResolution", SCR_WIDTH, SCR_HEIGHT);
-        ourShader.setVec3("cubeCentre", glm::vec3(0.0f, 0.05f, -2.0f));
+        // ourShader.setVec3("cubeCentre", centre);
         ourShader.setVec3("cameraFront", cameraFront);
+        ourShader.setVec3("cube_size_half", size_half);
+        ourShader.setVec3("minBound", minBound);
+        ourShader.setVec3("maxBound", maxBound);
         glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::rotate(trans , glm::radians(65.0f) , glm::vec3(1.0f, 0.0f, 1.0f));
+        trans = glm::rotate(trans , glm::radians(0.0f) , glm::vec3(1.0f, 0.0f, 1.0f));
         ourShader.setMat4("rot", trans);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+        // glm::vec3 localPos = glm::mat3(trans) * (newPos - centre);
+
+    
+        // glm::vec3 d = glm::abs(localPos) - size_half;
+        // float distance = glm::length(glm::max(d, glm::vec3(0.0f))) + 
+        //                 glm::min(glm::max(d.x, glm::max(d.y, d.z)), 0.0f);
+
+        //std::cout<<newPos.x<<" "<<newPos.y<<" "<<newPos.z<<std::endl;
+
         // For debugging:
         // std::cout<<cameraPos.x<<" "<<cameraPos.y<<" "<<cameraPos.z<<std::endl;
         // std::cout<<"Camera Front"<<std::endl;
@@ -153,6 +199,7 @@ void processInput(GLFWwindow *window)
 
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
         cameraPos -= cameraSpeed * cameraUp;
+
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)

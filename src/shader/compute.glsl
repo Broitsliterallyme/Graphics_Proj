@@ -2,58 +2,26 @@
 
 layout (local_size_x = 16, local_size_y = 16) in;
 layout (rgba32f, binding = 0) uniform image2D resultImage;
-uniform vec2 iResolution;  // Image resolution (width, height)
-uniform float iTime;       // Time for animation (optional)
-uniform vec3 cameraPosition;  // Camera position in world space
-uniform vec3 cameraTarget;     // Where the camera is looking at
-uniform float fov;             // Field of view
 
-float sphere(vec3 p, float radius) {
-    return length(p) - radius;
-}
+uniform vec2 iResolution; // Screen resolution
+uniform vec2 iCenter;     // Circle center in screen space (0 to 1)
+float iRadius=0.1;    // Circle radius (0 to 1)
 
 void main() {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
     if (pixel.x >= int(iResolution.x) || pixel.y >= int(iResolution.y)) return;
 
+    // Normalize pixel coordinates
     vec2 uv = vec2(pixel) / iResolution;
-    uv.x *= iResolution.x / iResolution.y;  // Adjust for aspect ratio
 
-    // Calculate ray direction from camera
-    vec3 forward = normalize(cameraTarget - cameraPosition);  // Direction the camera is facing
-    vec3 right = normalize(cross(forward, vec3(0.0, 1.0, 0.0)));  // Right vector (cross product with up)
-    vec3 up = cross(right, forward);  // Up vector (cross product with right)
+    // Adjust for aspect ratio
+    uv.x *= iResolution.x / iResolution.y;
 
-    // Use UV coordinates to create a direction from the camera view
-    float aspectRatio = iResolution.x / iResolution.y;
-    float tanFov = tan(radians(fov) * 0.5);  // Half field of view tangent
+    // Distance from circle center
+    float dist = length(uv - iCenter);
+    float alpha = smoothstep(iRadius, iRadius - 0.01, dist); // Smooth edge
 
-    // Adjust the ray direction based on the aspect ratio and FOV
-    vec3 rd = normalize(uv.x * tanFov * right + uv.y * tanFov * up + forward);
-
-    // Raymarching parameters
-    vec3 ro = cameraPosition;  // Camera position
-    vec3 sphereCenter = vec3(0.0, 0.0, 0.0);  // Sphere center at origin
-    float sphereRadius = 0.5;
-
-    // Raymarching loop (fixed steps)
-    float t = 0.0;
-    const int maxSteps = 100;
-    const float maxDistance = 100.0;
-    float distance = sphere(ro + rd * t, sphereRadius);
-    for (int i = 0; i < maxSteps && distance > 0.001 && t < maxDistance; i++) {
-        t += distance;
-        distance = sphere(ro + rd * t, sphereRadius);
-    }
-
-    // Color the scene
-    vec4 color;
-    if (distance < 0.001) {
-        color = vec4(1.0, 0.0, 0.0, 1.0);  // Red for the sphere
-    } else {
-        color = vec4(0.0, 0.0, 0.0, 1.0);  // Black background
-    }
-
-    // Store the result in the image
+    // White circle on black background
+    vec4 color = mix(vec4(0.0f, 0.0f, 0.0f, 1.0f), vec4(1.0f, 1.0f, 1.0f, 1.0f), alpha);
     imageStore(resultImage, pixel, color);
 }

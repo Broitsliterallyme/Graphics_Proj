@@ -17,9 +17,9 @@ void Camera::Matrix(Shader& shader, const char* uniform) {
 }
 void Camera::Inputs(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		Position += speed * Orientation;
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		Position -= speed * Orientation;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		Position += speed * Orientation;
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		Position -= glm::normalize(glm::cross(Orientation, Up)) * speed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
@@ -32,8 +32,8 @@ void Camera::Inputs(GLFWwindow* window) {
 		speed = 0.1f;
 	else
 		speed = 0.01f;
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-	double mouseX;
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		double mouseX;
 	double mouseY;
 	glfwGetCursorPos(window, &mouseX, &mouseY);
 	float rotX = sensitivity * (float)(mouseY - (Height / 2)) / Height ;

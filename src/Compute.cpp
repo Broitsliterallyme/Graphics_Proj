@@ -69,7 +69,7 @@ void ComputeShader::setVec3(const std::string& name, float x, float y,float z) {
     if (location != -1) {
         glUseProgram(programID);
         glUniform3f(location, x, y,z);
-        std::cout << "Uniform '" << name << "' set successfully to (" << x << ", " << y << ")." << std::endl;
+        std::cout << "Uniform '" << name << "' set successfully to (" << x << ", " << y << "," <<z<< ")." << std::endl;
     } else {
         std::cerr << "Warning: Uniform '" << name << "' not found!" << std::endl;
     }

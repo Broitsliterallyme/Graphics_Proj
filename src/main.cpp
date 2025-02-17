@@ -9,25 +9,24 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
 //Cube Length Data
 float quadVertices[] = {
-    // positions
-    -1.0f,  1.0f,
-    -1.0f, -1.0f,
-     1.0f, -1.0f,
-
-    -1.0f,  1.0f,
-     1.0f, -1.0f,
-     1.0f,  1.0f
+    // Positions (X, Y)
+    -1.0f, -1.0f,  // Bottom-left
+     1.0f, -1.0f,  // Bottom-right
+    -1.0f,  1.0f,  // Top-left
+     1.0f, -1.0f,  // Bottom-right
+     1.0f,  1.0f,  // Top-right
+    -1.0f,  1.0f   // Top-left
 };
+
 glm::vec3 size_half = glm::vec3(1.0f);
 
 int main()
@@ -45,7 +44,6 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -85,9 +83,9 @@ int main()
         //Processing input for window closing
         processInput(window);
         //Dispatching Compute Shader
-        computeShader.dispatch(64,64, 1);
+        computeShader.dispatch(120,67, 1);
         computeShader.setVec2("iResolution",1920,1080);
-        computeShader.setVec3("cameraPosition",camera.Position.x,camera.Position.y,camera.Position.z);
+        computeShader.setVec2("iCenter",camera.Position.x,camera.Position.y);
         //computeShader.setVec3("cameraTarget",camera.Orientation.x,camera.Position.y,camera.Position.z);
         computeShader.setFloat("fov",45);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -135,9 +133,6 @@ void processInput(GLFWwindow* window)
 		glfwSetWindowShouldClose(window, true);
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
-}
+
 
 

@@ -75,7 +75,7 @@ int main()
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, 800, 600);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, 1920, 1080);
     glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     //Creating Texture for frag shader Ends
 
@@ -84,7 +84,10 @@ int main()
     {
         //Processing input for window closing
         processInput(window);
-
+        //Dispatching Compute Shader
+        computeShader.dispatch(64,64, 1);
+        computeShader.setVec2("iResolution",1920,1080);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         //Calculating and Displaying FPS Starts
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -108,7 +111,7 @@ int main()
 		camera.Matrix(ourShader, "camMatrix");
 		camera.Inputs(window);
         //Sending Camera data to compute shader ends
-
+        glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glfwSwapBuffers(window);

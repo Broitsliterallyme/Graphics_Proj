@@ -10,5 +10,23 @@
   "command": "/usr/bin/g++ -I/home/erectus/Documents/Test/include -g -std=gnu++17 -o CMakeFiles/OpenGLExample.dir/src/main.cpp.o -c /home/erectus/Documents/Test/src/main.cpp",
   "file": "/home/erectus/Documents/Test/src/main.cpp",
   "output": "CMakeFiles/OpenGLExample.dir/src/main.cpp.o"
+},
+{
+  "directory": "/home/erectus/Documents/Test/build",
+  "command": "/usr/bin/g++ -I/home/erectus/Documents/Test/include -g -std=gnu++17 -o CMakeFiles/OpenGLExample.dir/src/Camera.cpp.o -c /home/erectus/Documents/Test/src/Camera.cpp",
+  "file": "/home/erectus/Documents/Test/src/Camera.cpp",
+  "output": "CMakeFiles/OpenGLExample.dir/src/Camera.cpp.o"
+},
+{
+  "directory": "/home/erectus/Documents/Test/build",
+  "command": "/usr/bin/g++ -I/home/erectus/Documents/Test/include -g -std=gnu++17 -o CMakeFiles/OpenGLExample.dir/src/Compute.cpp.o -c /home/erectus/Documents/Test/src/Compute.cpp",
+  "file": "/home/erectus/Documents/Test/src/Compute.cpp",
+  "output": "CMakeFiles/OpenGLExample.dir/src/Compute.cpp.o"
+},
+{
+  "directory": "/home/erectus/Documents/Test/build",
+  "command": "/usr/bin/g++ -I/home/erectus/Documents/Test/include -g -std=gnu++17 -o CMakeFiles/OpenGLExample.dir/src/Shader.cpp.o -c /home/erectus/Documents/Test/src/Shader.cpp",
+  "file": "/home/erectus/Documents/Test/src/Shader.cpp",
+  "output": "CMakeFiles/OpenGLExample.dir/src/Shader.cpp.o"
 }
 ]

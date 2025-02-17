@@ -87,6 +87,9 @@ int main()
         //Dispatching Compute Shader
         computeShader.dispatch(64,64, 1);
         computeShader.setVec2("iResolution",1920,1080);
+        computeShader.setVec3("cameraPosition",camera.Position.x,camera.Position.y,camera.Position.z);
+        //computeShader.setVec3("cameraTarget",camera.Orientation.x,camera.Position.y,camera.Position.z);
+        computeShader.setFloat("fov",45);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         //Calculating and Displaying FPS Starts
         float currentFrame = static_cast<float>(glfwGetTime());

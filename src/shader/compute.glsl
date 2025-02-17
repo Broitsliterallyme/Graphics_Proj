@@ -2,11 +2,13 @@
 
 layout (local_size_x = 16, local_size_y = 16) in;
 layout (rgba32f, binding = 0) uniform image2D resultImage;
-uniform vec2 iResolution; // Image resolution (width, height)
-uniform float iTime;      // Time for animation (optional, can be used for rotation)
+uniform vec2 iResolution;  // Image resolution (width, height)
+uniform float iTime;       // Time for animation (optional)
+uniform vec3 cameraPosition;  // Camera position in world space
+uniform vec3 cameraTarget;     // Where the camera is looking at
+uniform float fov;             // Field of view
 
 float sphere(vec3 p, float radius) {
-    // Returns the distance from point `p` to the surface of a sphere with radius `radius`
     return length(p) - radius;
 }
 
@@ -14,40 +16,44 @@ void main() {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
     if (pixel.x >= int(iResolution.x) || pixel.y >= int(iResolution.y)) return;
 
-    // Normalized pixel coordinates (0 to 1)
     vec2 uv = vec2(pixel) / iResolution;
+    uv.x *= iResolution.x / iResolution.y;  // Adjust for aspect ratio
 
-    // Adjust for aspect ratio
-    uv.x *= iResolution.x / iResolution.y;
+    // Calculate ray direction from camera
+    vec3 forward = normalize(cameraTarget - cameraPosition);  // Direction the camera is facing
+    vec3 right = normalize(cross(forward, vec3(0.0, 1.0, 0.0)));  // Right vector (cross product with up)
+    vec3 up = cross(right, forward);  // Up vector (cross product with right)
 
-    // Convert 2D pixel coordinates to 3D space
-    // Use uv.x and uv.y to create the x and y coordinates, and add a "z" based on the time
-    vec3 ro = vec3(0.0, 0.0, -3.0);  // Camera position (origin point)
-    vec3 rd = normalize(vec3(uv - 0.5, 1.0)); // Direction of the ray, looking at (0, 0, 0)
+    // Use UV coordinates to create a direction from the camera view
+    float aspectRatio = iResolution.x / iResolution.y;
+    float tanFov = tan(radians(fov) * 0.5);  // Half field of view tangent
 
-    // Sphere properties
-    vec3 sphereCenter = vec3(0.0, 0.0, 0.0);  // Sphere center at the origin
-    float sphereRadius = 0.5;  // Sphere radius
+    // Adjust the ray direction based on the aspect ratio and FOV
+    vec3 rd = normalize(uv.x * tanFov * right + uv.y * tanFov * up + forward);
 
-    // Raymarching loop (simple implementation, fixed maximum steps)
+    // Raymarching parameters
+    vec3 ro = cameraPosition;  // Camera position
+    vec3 sphereCenter = vec3(0.0, 0.0, 0.0);  // Sphere center at origin
+    float sphereRadius = 0.5;
+
+    // Raymarching loop (fixed steps)
     float t = 0.0;
-    const int maxSteps = 100;  // Maximum number of raymarching steps
-    const float maxDistance = 100.0;  // Maximum distance we want to march before giving up
-    float distance = sphere(ro + rd * t, sphereRadius);  // Initial distance to the sphere
+    const int maxSteps = 100;
+    const float maxDistance = 100.0;
+    float distance = sphere(ro + rd * t, sphereRadius);
     for (int i = 0; i < maxSteps && distance > 0.001 && t < maxDistance; i++) {
-        t += distance;  // Move along the ray
-        distance = sphere(ro + rd * t, sphereRadius);  // Recalculate the distance at the new point
+        t += distance;
+        distance = sphere(ro + rd * t, sphereRadius);
     }
 
-    // Determine if we're inside or outside the sphere
+    // Color the scene
     vec4 color;
     if (distance < 0.001) {
-        // We hit the sphere, render it with a color
         color = vec4(1.0, 0.0, 0.0, 1.0);  // Red for the sphere
     } else {
-        // We didn't hit the sphere, render background color
-        color = vec4(0.0, 0.0, 0.0, 1.0);  // Black for the background
+        color = vec4(0.0, 0.0, 0.0, 1.0);  // Black background
     }
 
-    imageStore(resultImage, pixel, color);  // Store the color at the pixel location
+    // Store the result in the image
+    imageStore(resultImage, pixel, color);
 }

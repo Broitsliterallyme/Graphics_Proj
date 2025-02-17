@@ -64,6 +64,26 @@ void ComputeShader::setVec2(const std::string& name, float x, float y) {
         std::cerr << "Warning: Uniform '" << name << "' not found!" << std::endl;
     }
 }
+void ComputeShader::setVec3(const std::string& name, float x, float y,float z) {
+    GLint location = glGetUniformLocation(programID, name.c_str());
+    if (location != -1) {
+        glUseProgram(programID);
+        glUniform3f(location, x, y,z);
+        std::cout << "Uniform '" << name << "' set successfully to (" << x << ", " << y << ")." << std::endl;
+    } else {
+        std::cerr << "Warning: Uniform '" << name << "' not found!" << std::endl;
+    }
+}
+void ComputeShader::setFloat(const std::string& name, float x) {
+    GLint location = glGetUniformLocation(programID, name.c_str());
+    if (location != -1) {
+        glUseProgram(programID);
+        glUniform1f(location, x);
+        std::cout << "Uniform '" << name << "' set successfully to (" << x << ", )." << std::endl;
+    } else {
+        std::cerr << "Warning: Uniform '" << name << "' not found!" << std::endl;
+    }
+}
 
 std::string ComputeShader::loadShaderSource(const std::string& path) {
     std::ifstream file(path);

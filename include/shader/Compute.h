@@ -18,7 +18,9 @@ public:
     void createSSBO(GLuint& ssbo, GLuint binding, size_t size, void* data = nullptr, GLenum usage = GL_DYNAMIC_DRAW);
     void getSSBOData(GLuint ssbo, size_t size, void* outputBuffer);
     void setVec2(const std::string& name, float x, float y);
-private:
+    void setVec3(const std::string& name, float x, float y,float z);
+    void setFloat(const std::string& name, float x);
+    private:
     GLuint shaderID;
     GLuint programID;
 

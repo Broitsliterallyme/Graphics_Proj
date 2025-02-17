@@ -85,7 +85,7 @@ int main()
         //Dispatching Compute Shader
         computeShader.dispatch(1920/16,1080/16, 1);
         computeShader.setVec2("iResolution",1920,1080);
-        computeShader.setVec2("iCenter",camera.Position.x,camera.Position.y);
+        computeShader.setVec3("iCenter",camera.Position.x,camera.Position.y,camera.Position.z);
         //computeShader.setVec3("cameraTarget",camera.Orientation.x,camera.Position.y,camera.Position.z);
         computeShader.setFloat("fov",45);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

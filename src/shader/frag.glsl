@@ -12,9 +12,9 @@ uniform int numCubes;
 uniform vec3 minBound;
 uniform vec3 maxBound;
 
-const int MAX_STEPS = 100;
-const float MAX_DIST = 100.0;
-const float SURFACE_DIST = 0.001;
+const int MAX_STEPS = 15;
+const float MAX_DIST = 50.0;
+const float SURFACE_DIST = 1;
 
 float cubeSDF(vec3 p , vec3 cubeCentre) {
     p = p - cubeCentre;

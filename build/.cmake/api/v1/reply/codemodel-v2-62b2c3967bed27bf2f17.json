@@ -41,14 +41,14 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "GLAD::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-GLAD-Debug-68f4d61426d3cdeac2c6.json",
+					"jsonFile" : "target-GLAD-Debug-0529b3db572eec6c727b.json",
 					"name" : "GLAD",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "OpenGLExample::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-OpenGLExample-Debug-e67ff0f9a72f238b1923.json",
+					"jsonFile" : "target-OpenGLExample-Debug-a0333ab450761df99116.json",
 					"name" : "OpenGLExample",
 					"projectIndex" : 0
 				}
@@ -58,8 +58,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/erectus/Documents/Graphics_Proj/build",
-		"source" : "/home/erectus/Documents/Graphics_Proj"
+		"build" : "/home/erectus/Documents/Test/build",
+		"source" : "/home/erectus/Documents/Test"
 	},
 	"version" : 
 	{

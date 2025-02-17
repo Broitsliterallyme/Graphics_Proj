@@ -70,6 +70,15 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     //VAO and VBO Bind and Init Stops
+    
+    //Creating Texture for frag shader Starts
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, 800, 600);
+    glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    //Creating Texture for frag shader Ends
+
 	Camera camera(800, 800, glm::vec3(0.0f, 0.0f, 3.0f));
     while (!glfwWindowShouldClose(window))
     {

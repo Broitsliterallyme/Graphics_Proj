@@ -8,7 +8,7 @@ void main() {
     if (pixel.x >= int(iResolution.x) || pixel.y >= int(iResolution.y)) return;
 
     vec2 uv = vec2(pixel) / iResolution;
-    vec4 color = vec4(uv, 0.9, 1.0); // Gradient from black to blue
+    vec4 color = vec4(uv, 0.5, 1.0); // Gradient from black to blue
 
     imageStore(resultImage, pixel, color);
 }

@@ -34,7 +34,7 @@ float lastFrame = 0.0f;
 int main()
 {
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -57,7 +57,8 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    Shader ourShader("coordinate_systems1.glsl", "coordinate_systems.glsl");
+    Shader ourShader("/home/erectus/Documents/Graphics_Proj/src/shader/Vert.glsl", "/home/erectus/Documents/Graphics_Proj/src/shader/Frag.glsl");
+    ComputeShader compute("/home/erectus/Documents/Graphics_Proj/src/shader/compute_shader.glsl");
 
     float quadVertices[] = {
         // positions
@@ -106,6 +107,12 @@ int main()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    GLuint ssbo;
+    float data[5] = {1, 2, 3, 4, 5};
+    compute.createSSBO(ssbo, 0, sizeof(data), data);
+
+
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     while (!glfwWindowShouldClose(window))
@@ -132,6 +139,7 @@ int main()
         {
             ourShader.setVec3((("cubeCentres[" + std::to_string(i) + "]")), translations[i]);
         } 
+        compute.dispatch(5);
 
         glm::mat4 view = glm::lookAt(glm::vec3(0.0f , 0.0f , 0.0f), cameraFront, cameraUp);
         ourShader.setInt("numCubes", 100);

@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/home/erectus/Documents/Graphics_Proj/build",
+  "command": "/usr/bin/gcc -I/home/erectus/Documents/Graphics_Proj/include -g -o CMakeFiles/GLAD.dir/src/glad.c.o -c /home/erectus/Documents/Graphics_Proj/src/glad.c",
+  "file": "/home/erectus/Documents/Graphics_Proj/src/glad.c",
+  "output": "CMakeFiles/GLAD.dir/src/glad.c.o"
+},
+{
+  "directory": "/home/erectus/Documents/Graphics_Proj/build",
+  "command": "/usr/bin/g++ -I/home/erectus/Documents/Graphics_Proj/include -g -std=gnu++17 -o CMakeFiles/OpenGLExample.dir/src/main.cpp.o -c /home/erectus/Documents/Graphics_Proj/src/main.cpp",
+  "file": "/home/erectus/Documents/Graphics_Proj/src/main.cpp",
+  "output": "CMakeFiles/OpenGLExample.dir/src/main.cpp.o"
+}
+]

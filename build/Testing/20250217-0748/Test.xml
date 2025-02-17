@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20250217-0748-Experimental"
+	Name="(empty)"
+	Generator="ctest-3.31.5"
+	CompilerName=""
+	CompilerVersion=""
+	OSName="Linux"
+	Hostname="archlinux"
+	OSRelease="6.13.2-arch1-1"
+	OSVersion="#1 SMP PREEMPT_DYNAMIC Sat, 08 Feb 2025 18:54:55 +0000"
+	OSPlatform="x86_64"
+	Is64Bits="1"
+	VendorString="AuthenticAMD"
+	VendorID="Advanced Micro Devices"
+	FamilyID="25"
+	ModelID="68"
+	ModelName="AMD Ryzen 5 7535HS with Radeon Graphics"
+	ProcessorCacheSize="512"
+	NumberOfLogicalCPU="12"
+	NumberOfPhysicalCPU="6"
+	TotalVirtualMemory="17043"
+	TotalPhysicalMemory="15184"
+	LogicalProcessorsPerPhysical="2"
+	ProcessorClockFrequency="4516.43"
+	>
+	<Testing>
+		<StartDateTime>Feb 17 13:33 +0545</StartDateTime>
+		<StartTestTime>1739778500</StartTestTime>
+		<TestList/>
+		<EndDateTime>Feb 17 13:33 +0545</EndDateTime>
+		<EndTestTime>1739778500</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>

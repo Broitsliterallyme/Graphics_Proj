@@ -1,0 +1,4 @@
+/home/erectus/Documents/Graphics_Proj/build/CMakeFiles/GLAD.dir
+/home/erectus/Documents/Graphics_Proj/build/CMakeFiles/OpenGLExample.dir
+/home/erectus/Documents/Graphics_Proj/build/CMakeFiles/edit_cache.dir
+/home/erectus/Documents/Graphics_Proj/build/CMakeFiles/rebuild_cache.dir

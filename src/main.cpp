@@ -83,7 +83,7 @@ int main()
         //Processing input for window closing
         processInput(window);
         //Dispatching Compute Shader
-        computeShader.dispatch(120,67, 1);
+        computeShader.dispatch(1920/16,1080/16, 1);
         computeShader.setVec2("iResolution",1920,1080);
         computeShader.setVec2("iCenter",camera.Position.x,camera.Position.y);
         //computeShader.setVec3("cameraTarget",camera.Orientation.x,camera.Position.y,camera.Position.z);

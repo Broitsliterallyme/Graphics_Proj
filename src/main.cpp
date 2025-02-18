@@ -104,7 +104,7 @@ int main()
     glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     //Creating Texture for frag shader Ends
 //Voxel location data 
-const int gridX = 100, gridY = 100, gridZ = 100;
+const int gridX = 1000, gridY = 1000, gridZ = 1000;
 const size_t totalVoxels = gridX * gridY * gridZ;
 std::vector<GLint> voxelData(totalVoxels, 0);
 fillVoxelGridRandom(voxelData, 0.3f);

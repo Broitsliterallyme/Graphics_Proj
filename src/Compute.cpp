@@ -30,7 +30,6 @@ void ComputeShader::dispatch(GLuint x, GLuint y, GLuint z) {
     glUseProgram(programID);
     glDispatchCompute(x, y, z);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT); // Ensure writes to SSBOs are completed before further usage
-    std::cout << "Dispatch successful with workgroup size (" << x << ", " << y << ", " << z << ")." << std::endl;
 }
 
 void ComputeShader::setSSBO(GLuint binding, GLuint ssbo) {
@@ -59,7 +58,6 @@ void ComputeShader::setVec2(const std::string& name, float x, float y) {
     if (location != -1) {
         glUseProgram(programID);
         glUniform2f(location, x, y);
-        std::cout << "Uniform '" << name << "' set successfully to (" << x << ", " << y << ")." << std::endl;
     } else {
         std::cerr << "Warning: Uniform '" << name << "' not found!" << std::endl;
     }
@@ -69,7 +67,6 @@ void ComputeShader::setVec3(const std::string& name, float x, float y,float z) {
     if (location != -1) {
         glUseProgram(programID);
         glUniform3f(location, x, y,z);
-        std::cout << "Uniform '" << name << "' set successfully to (" << x << ", " << y << "," <<z<< ")." << std::endl;
     } else {
         std::cerr << "Warning: Uniform '" << name << "' not found!" << std::endl;
     }
@@ -79,11 +76,20 @@ void ComputeShader::setFloat(const std::string& name, float x) {
     if (location != -1) {
         glUseProgram(programID);
         glUniform1f(location, x);
-        std::cout << "Uniform '" << name << "' set successfully to (" << x << ", )." << std::endl;
     } else {
         std::cerr << "Warning: Uniform '" << name << "' not found!" << std::endl;
     }
 }
+void ComputeShader::setVoxelGrid(const std::string& name, const std::vector<GLint>& data) {
+    GLint location = glGetUniformLocation(programID, name.c_str());
+    if (location != -1) {
+        glUseProgram(programID);
+        glUniform1iv(location, data.size(), data.data());
+    } else {
+        std::cerr << "Warning: Uniform '" << name << "' not found!" << std::endl;
+    }
+}
+
 
 std::string ComputeShader::loadShaderSource(const std::string& path) {
     std::ifstream file(path);

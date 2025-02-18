@@ -17,9 +17,9 @@ void Camera::Matrix(Shader& shader, const char* uniform) {
 }
 void Camera::Inputs(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		Position -= speed * Orientation;
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		Position += speed * Orientation;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		Position -= speed * Orientation;
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		Position -= glm::normalize(glm::cross(Orientation, Up)) * speed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)

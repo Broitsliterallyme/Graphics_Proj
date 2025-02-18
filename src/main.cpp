@@ -8,7 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <chrono>
+#include <vector>
 void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -28,7 +29,33 @@ float quadVertices[] = {
 };
 
 glm::vec3 size_half = glm::vec3(1.0f);
+using namespace std;
+using namespace std::chrono;
 
+auto lastTime = high_resolution_clock::now();
+int frameCount = 0;
+
+void updateFPS() {
+    frameCount++;
+    auto currentTime = high_resolution_clock::now();
+    duration<float> elapsed = currentTime - lastTime;
+
+    if (elapsed.count() >= 1.0f) {
+        float fps = frameCount / elapsed.count();
+        cout << "FPS: " << fps << endl;
+        lastTime = currentTime;
+        frameCount = 0;
+    }
+}
+void fillVoxelGridRandom(std::vector<GLint>& voxelData, float fillProbability = 0.3f) {
+    std::srand(static_cast<unsigned>(std::time(0))); // Seed the random number generator
+    for (size_t i = 0; i < voxelData.size(); ++i) {
+        // Generate a random float between 0 and 1.
+        float r = std::rand() / static_cast<float>(RAND_MAX);
+        // If the random number is less than fillProbability, mark the voxel as occupied (1), otherwise empty (0).
+        voxelData[i] = (r < fillProbability) ? 1 : 0;
+    }
+}
 int main()
 {
     //GLFW Init Starts
@@ -76,19 +103,28 @@ int main()
     glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, 1920, 1080);
     glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     //Creating Texture for frag shader Ends
+//Voxel location data 
+const int gridX = 100, gridY = 100, gridZ = 100;
+const size_t totalVoxels = gridX * gridY * gridZ;
+std::vector<GLint> voxelData(totalVoxels, 0);
+fillVoxelGridRandom(voxelData, 0.3f);
+GLuint voxelSSBO;
+computeShader.createSSBO(voxelSSBO, 1, voxelData.size() * sizeof(int), voxelData.data(), GL_STATIC_DRAW);
 
-	Camera camera(800, 800, glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(800, 800, glm::vec3(0.0f, 0.0f, 3.0f));
+
     while (!glfwWindowShouldClose(window))
-    {
+    {        updateFPS();
         //Processing input for window closing
         processInput(window);
         //Dispatching Compute Shader
         computeShader.dispatch(1920/16,1080/16, 1);
         computeShader.setVec2("iResolution",1920,1080);
-        computeShader.setVec3("iCenter",camera.Position.x,camera.Position.y,camera.Position.z);
+        computeShader.setVec3("CameraPos",camera.Position.x,camera.Position.y,camera.Position.z);
+        computeShader.setVec3("RayDir",camera.Orientation.x,camera.Orientation.y,camera.Orientation.z);
         //computeShader.setVec3("cameraTarget",camera.Orientation.x,camera.Position.y,camera.Position.z);
-        computeShader.setFloat("fov",45);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
         //Calculating and Displaying FPS Starts
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;

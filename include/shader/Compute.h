@@ -20,6 +20,8 @@ public:
     void setVec2(const std::string& name, float x, float y);
     void setVec3(const std::string& name, float x, float y,float z);
     void setFloat(const std::string& name, float x);
+    void setVoxelGrid(const std::string& name, const std::vector<GLint>& data);
+
     private:
     GLuint shaderID;
     GLuint programID;

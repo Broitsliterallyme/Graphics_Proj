@@ -47,15 +47,41 @@ void updateFPS() {
         frameCount = 0;
     }
 }
-void fillVoxelGridRandom(std::vector<GLint>& voxelData, float fillProbability = 0.3f) {
-    std::srand(static_cast<unsigned>(std::time(0))); // Seed the random number generator
-    for (size_t i = 0; i < voxelData.size(); ++i) {
-        // Generate a random float between 0 and 1.
-        float r = std::rand() / static_cast<float>(RAND_MAX);
-        // If the random number is less than fillProbability, mark the voxel as occupied (1), otherwise empty (0).
-        voxelData[i] = (r < fillProbability) ? 1 : 0;
+
+float generateNoise(int x, int z, float scale) {
+    float noiseX = std::sin(x * scale);
+    float noiseZ = std::cos(z * scale);
+    
+    float noiseX2 = std::sin(x * scale * 2.0f);
+    float noiseZ2 = std::cos(z * scale * 2.0f);
+    
+    float baseNoise = (noiseX + noiseZ) * 0.5f;
+    float detailNoise = (noiseX2 + noiseZ2) * 0.25f;
+    
+    return baseNoise + detailNoise;
+}
+
+void fillVoxelGridMountain(std::vector<GLint>& voxelData, int gridX, int gridY, int gridZ, float scale, float amplitude) {
+    // Loop over the X-Z plane.
+    for (int z = 0; z < gridZ; ++z) {
+        for (int x = 0; x < gridX; ++x) {
+            // Generate a noise value using sine and cosine.
+            float noise = generateNoise(x, z, scale);
+            // Normalize the noise from [-1, 1] to [0, 1]
+            float normalizedNoise = (noise + 1.0f) / 2.0f;
+            // Determine the height at this (x, z) location.
+            int height = static_cast<int>(normalizedNoise * amplitude * gridY);
+            // Clamp the height if needed.
+            if (height > gridY) height = gridY;
+            // Fill all voxels below this height as occupied (1) and the rest as empty (0).
+            for (int y = 0; y < gridY; ++y) {
+                int index = x + gridX * (y + gridY * z);
+                voxelData[index] = (y < height) ? 1 : 0;
+            }
+        }
     }
 }
+
 int main()
 {
     //GLFW Init Starts
@@ -104,10 +130,15 @@ int main()
     glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
     //Creating Texture for frag shader Ends
 //Voxel location data 
-const int gridX = 1000, gridY = 1000, gridZ = 1000;
+// Voxel grid dimensions (increasing gridY for vertical detail)
+const int gridX = 600, gridY = 150, gridZ = 600;
 const size_t totalVoxels = gridX * gridY * gridZ;
 std::vector<GLint> voxelData(totalVoxels, 0);
-fillVoxelGridRandom(voxelData, 0.3f);
+
+// Instead of using fillVoxelGridRandom, fill the grid with mountain terrain.
+// The scale value (e.g., 0.05f) and amplitude (e.g., 1.0f) can be adjusted to change the mountain shape.
+fillVoxelGridMountain(voxelData, gridX, gridY, gridZ, 0.05f, 1.0f);
+
 GLuint voxelSSBO;
 computeShader.createSSBO(voxelSSBO, 1, voxelData.size() * sizeof(int), voxelData.data(), GL_STATIC_DRAW);
 
@@ -122,6 +153,7 @@ Camera camera(800, 800, glm::vec3(0.0f, 0.0f, 3.0f));
         computeShader.setVec2("iResolution",1920,1080);
         computeShader.setVec3("CameraPos",camera.Position.x,camera.Position.y,camera.Position.z);
         computeShader.setVec3("RayDir",camera.Orientation.x,camera.Orientation.y,camera.Orientation.z);
+       // computeShader.setVec3("Sun")
         //computeShader.setVec3("cameraTarget",camera.Orientation.x,camera.Position.y,camera.Position.z);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -168,7 +200,6 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
-
 
 
 

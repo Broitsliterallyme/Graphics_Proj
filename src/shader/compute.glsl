@@ -12,8 +12,8 @@ uniform vec3 CameraPos;
 uniform vec3 RayDir;
 
 // Voxel grid parameters.
-const float voxelSize = 0.2;
-const ivec3 gridSize = ivec3(1000, 1000, 1000);  // 1,000,000 voxels
+const float voxelSize = 0.08;
+const ivec3 gridSize = ivec3(600, 150, 600);  // 1,000,000 voxels
 
 // SSBO for voxel grid occupancy data.
 // Each element represents one voxel: 0 for empty, nonzero for occupied.

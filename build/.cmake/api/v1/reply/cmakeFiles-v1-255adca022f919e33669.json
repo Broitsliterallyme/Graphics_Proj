@@ -208,11 +208,11 @@
 		},
 		{
 			"isExternal" : true,
-			"path" : "/usr/lib/cmake/glfw3/glfw3ConfigVersion.cmake"
+			"path" : "/lib/cmake/glfw3/glfw3ConfigVersion.cmake"
 		},
 		{
 			"isExternal" : true,
-			"path" : "/usr/lib/cmake/glfw3/glfw3Config.cmake"
+			"path" : "/lib/cmake/glfw3/glfw3Config.cmake"
 		},
 		{
 			"isCMake" : true,
@@ -256,23 +256,43 @@
 		},
 		{
 			"isExternal" : true,
-			"path" : "/usr/lib/cmake/glfw3/glfw3Targets.cmake"
+			"path" : "/lib/cmake/glfw3/glfw3Targets.cmake"
 		},
 		{
 			"isExternal" : true,
-			"path" : "/usr/lib/cmake/glfw3/glfw3Targets-none.cmake"
+			"path" : "/lib/cmake/glfw3/glfw3Targets-none.cmake"
 		},
 		{
 			"isExternal" : true,
-			"path" : "/usr/lib/cmake/glm/glmConfigVersion.cmake"
+			"path" : "/lib/cmake/glm/glmConfigVersion.cmake"
 		},
 		{
 			"isExternal" : true,
-			"path" : "/usr/lib/cmake/glm/glmConfig.cmake"
+			"path" : "/lib/cmake/glm/glmConfig.cmake"
 		},
 		{
 			"isExternal" : true,
-			"path" : "/usr/lib/cmake/glm/glmConfig-release.cmake"
+			"path" : "/lib/cmake/glm/glmConfig-release.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/usr/share/cmake/Modules/FindGLEW.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/usr/share/cmake/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/usr/share/cmake/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/usr/share/cmake/Modules/SelectLibraryConfigurations.cmake"
 		}
 	],
 	"kind" : "cmakeFiles",

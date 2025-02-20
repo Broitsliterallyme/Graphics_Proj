@@ -10,10 +10,11 @@ find_package(glfw3 REQUIRED)
 #Add glm
 find_package(glm REQUIRED)
 # Include GLAD manually
+find_package(GLEW REQUIRED)
 add_library(GLAD STATIC src/glad.c)
 target_include_directories(GLAD PUBLIC include/)
 # Add your source files
 file(GLOB SOURCES "src/*.cpp")    # Other source files
 set(STARTUP_FILE "src/main.cpp")
 add_executable(OpenGLExample ${STARTUP_FILE} ${SOURCES} )# Link libraries
-target_link_libraries(OpenGLExample PRIVATE OpenGL::GL glfw GLAD)
+target_link_libraries(OpenGLExample PRIVATE OpenGL::GL glfw GLAD GLEW::GLEW)

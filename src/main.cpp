@@ -10,11 +10,21 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <chrono>
 #include <vector>
+#include <numeric>
+#include <algorithm>
+#include <random>
 void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+struct Voxel {
+    unsigned int occupancy; // 0 = empty, nonzero = occupied.
+    float R=1.0f;
+    float G=1.0f;
+    float B=0;
+
+};
 
 
 //Cube Length Data
@@ -47,7 +57,84 @@ void updateFPS() {
         frameCount = 0;
     }
 }
-
+class TerrainGenerator {
+    private:
+        std::vector<int> perm;
+        int seed;
+    
+        void initPermutation() {
+            std::vector<int> p(256);
+            std::iota(p.begin(), p.end(), 0);
+            std::shuffle(p.begin(), p.end(), std::mt19937(seed));
+            
+            perm.resize(512);
+            for(int i = 0; i < 512; i++)
+                perm[i] = p[i & 255];
+        }
+    
+        float fade(float t) const {
+            return t * t * t * (t * (t * 6 - 15) + 10);
+        }
+    
+        float lerp(float a, float b, float t) const {
+            return a + t * (b - a);
+        }
+    
+        float grad(int hash, float x, float z) const {
+            int h = hash & 15;
+            float u = h < 8 ? x : z;
+            float v = h < 4 ? z : h == 12 || h == 14 ? x : 0;
+            return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+        }
+    
+    public:
+        TerrainGenerator(int seed = 0) : seed(seed) {
+            initPermutation();
+        }
+    
+        float getHeight(float x, float z) const {
+            int X = (int)floor(x) & 255;
+            int Z = (int)floor(z) & 255;
+            x -= floor(x);
+            z -= floor(z);
+    
+            float u = fade(x);
+            float v = fade(z);
+    
+            int A = perm[X] + Z;
+            int AA = perm[A];
+            int AB = perm[A + 1];
+            int B = perm[X + 1] + Z;
+            int BA = perm[B];
+            int BB = perm[B + 1];
+    
+            return lerp(lerp(grad(AA, x,   z),
+                           grad(BA, x-1, z),
+                           u),
+                    lerp(grad(AB, x,   z-1),
+                           grad(BB, x-1, z-1),
+                           u),
+                    v);
+        }
+    
+        // Example scaling function to convert noise to terrain height
+        float getY(float x, float z, float scale = 50.0f) const {
+            float amplitude = 1.0f;
+            float frequency = 0.01f;
+            float persistence = 0.5f;
+            float lacunarity = 2.0f;
+            float total = 0.0f;
+            
+            // Add multiple octaves for more detail
+            for(int i = 0; i < 4; i++) {
+                total += getHeight(x * frequency, z * frequency) * amplitude;
+                amplitude *= persistence;
+                frequency *= lacunarity;
+            }
+            
+            return total * scale;
+        }
+    };
 float generateNoise(int x, int z, float scale) {
     float noiseX = std::sin(x * scale);
     float noiseZ = std::cos(z * scale);
@@ -61,22 +148,36 @@ float generateNoise(int x, int z, float scale) {
     return baseNoise + detailNoise;
 }
 
-void fillVoxelGridMountain(std::vector<GLint>& voxelData, int gridX, int gridY, int gridZ, float scale, float amplitude) {
+void fillVoxelGridMountain(std::vector<Voxel>& voxelData, int gridX, int gridY, int gridZ, float scale) {
+    TerrainGenerator terrainGen(0);
     // Loop over the X-Z plane.
     for (int z = 0; z < gridZ; ++z) {
         for (int x = 0; x < gridX; ++x) {
             // Generate a noise value using sine and cosine.
-            float noise = generateNoise(x, z, scale);
-            // Normalize the noise from [-1, 1] to [0, 1]
-            float normalizedNoise = (noise + 1.0f) / 2.0f;
-            // Determine the height at this (x, z) location.
-            int height = static_cast<int>(normalizedNoise * amplitude * gridY);
-            // Clamp the height if needed.
+            float height = terrainGen.getY(x, z,scale);
+
             if (height > gridY) height = gridY;
             // Fill all voxels below this height as occupied (1) and the rest as empty (0).
             for (int y = 0; y < gridY; ++y) {
                 int index = x + gridX * (y + gridY * z);
-                voxelData[index] = (y < height) ? 1 : 0;
+                voxelData[index].occupancy = (y < height) ? 1 : 0;
+                if (height <= 40) {
+                    // Below 40, use the base gray color.
+                    voxelData[index].R = 0.3f;
+                    voxelData[index].G = 0.3f;
+                    voxelData[index].B = 0.3f;
+                } else {
+                    // For heights above 40, blend from gray to white.
+                    // For example, let’s say that between height 40 and 60 the color gradually becomes white.
+                    float f = (height - 40.0f) / 20.0f; // f goes from 0.0 at height==40 to 1.0 at height==60.
+                    if (f > 1.0f)
+                        f = 1.0f;
+                    // Linearly interpolate between 0.3 (gray) and 1.0 (white) for each channel.
+                    voxelData[index].R = 0.3f + f * (1.0f - 0.3f);
+                    voxelData[index].G = 0.3f + f * (1.0f - 0.3f);
+                    voxelData[index].B = 0.3f + f * (1.0f - 0.3f);
+                }
+                
             }
         }
     }
@@ -131,16 +232,18 @@ int main()
     //Creating Texture for frag shader Ends
 //Voxel location data 
 // Voxel grid dimensions (increasing gridY for vertical detail)
-const int gridX = 600, gridY = 150, gridZ = 600;
+const int gridX = 1000, gridY = 150, gridZ = 1000;
 const size_t totalVoxels = gridX * gridY * gridZ;
-std::vector<GLint> voxelData(totalVoxels, 0);
+
+std::vector<Voxel> voxelData(totalVoxels);
+// Fill the voxel grid with random data.
 
 // Instead of using fillVoxelGridRandom, fill the grid with mountain terrain.
 // The scale value (e.g., 0.05f) and amplitude (e.g., 1.0f) can be adjusted to change the mountain shape.
-fillVoxelGridMountain(voxelData, gridX, gridY, gridZ, 0.05f, 1.0f);
+fillVoxelGridMountain(voxelData, gridX, gridY, gridZ, 100.5f);
 
 GLuint voxelSSBO;
-computeShader.createSSBO(voxelSSBO, 1, voxelData.size() * sizeof(int), voxelData.data(), GL_STATIC_DRAW);
+computeShader.createSSBO(voxelSSBO, 1, voxelData.size() * sizeof(Voxel), voxelData.data(), GL_STATIC_DRAW);
 
 Camera camera(800, 800, glm::vec3(0.0f, 0.0f, 3.0f));
 
@@ -200,6 +303,5 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
-
 
 

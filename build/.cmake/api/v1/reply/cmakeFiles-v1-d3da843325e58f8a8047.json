@@ -298,8 +298,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/home/erectus/Documents/Test/build",
-		"source" : "/home/erectus/Documents/Test"
+		"build" : "/home/erectus/Documents/Octree/build",
+		"source" : "/home/erectus/Documents/Octree"
 	},
 	"version" : 
 	{

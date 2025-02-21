@@ -1,141 +1,165 @@
 #version 430 core
-#ifdef GL_ES
-precision mediump float; // For ES targets; desktop GL ignores these.
-#endif
 
-// Work-group size for image processing.
-layout(local_size_x = 32, local_size_y = 32) in;
-
-// Output image.
+layout(local_size_x = 16, local_size_y = 16) in;
 layout(rgba32f, binding = 0) uniform image2D resultImage;
 
-// Uniforms for image resolution, camera position, and ray direction.
+struct FlattenedNode {
+    bool IsLeaf;
+    int childIndices[8];
+    vec4 color;
+};
+
+layout(std430, binding = 1) buffer NodeBuffer {
+    FlattenedNode nodes[];
+};
+
 uniform vec2 iResolution;
-uniform vec3 CameraPos;
-uniform vec3 RayDir;
+uniform mat4 viewMatrix;
+uniform vec3 cameraPos;
+uniform float fov;
+uniform vec3 minBound;
+uniform vec3 maxBound;
+float lodThreshold=0.015;  // Controls when to stop subdividing based on projected size
 
-// Voxel grid parameters.
-const float voxelSize = 0.08;
-const ivec3 gridSize = ivec3(1000, 150, 1000);
-const int gridXY = gridSize.x * gridSize.y;
-const float invVoxelSize = 1.0 / voxelSize;
-struct Voxel {
-    uint occupancy; // 0 = empty, nonzero = occupied.
-    float R;
-    float G;
-    float B;
-};
-// SSBO for voxel grid occupancy data (0 for empty, nonzero for occupied).
-layout(std430, binding = 1) buffer VoxelGridBuffer {
-    Voxel voxelData[];
+const float MAX_DIST = 4000.0;
+const int MAX_STACK_SIZE = 16;
+
+// Stack entry structure for iterative traversal.
+struct StackEntry {
+    int nodeIndex;
+    vec3 nodeMin;
+    vec3 nodeMax;
+    float tEnter;
 };
 
-// Convert a world-space position to grid coordinates.
-ivec3 worldToGrid(vec3 pos) {
-    return ivec3(floor(pos * invVoxelSize));
+// Improved AABB intersection that uses the precomputed inverse ray direction.
+bool intersectAABB(vec3 ro, vec3 rd, vec3 invRD, vec3 boxMin, vec3 boxMax, out float tEnter, out float tExit) {
+    vec3 t1 = (boxMin - ro) * invRD;
+    vec3 t2 = (boxMax - ro) * invRD;
+    vec3 tmin = min(t1, t2);
+    vec3 tmax = max(t1, t2);
+    tEnter = max(max(tmin.x, tmin.y), tmin.z);
+    tExit  = min(min(tmax.x, tmax.y), tmax.z);
+    return (tEnter <= tExit && tExit > 0.0);
 }
 
-// Checks if the voxel at coordinate v is occupied.
-bool isVoxelOccupied(int index) {
-    return voxelData[index].occupancy != 0;
+// Helper function to compute a child's AABB from its parent's bounds.
+void computeChildAABB(int child, vec3 parentMin, vec3 parentMax, out vec3 childMin, out vec3 childMax) {
+    vec3 center = (parentMin + parentMax) * 0.5;
+    childMin.x = ((child & 4) == 0) ? parentMin.x : center.x;
+    childMax.x = ((child & 4) == 0) ? center.x    : parentMax.x;
+    childMin.y = ((child & 2) == 0) ? parentMin.y : center.y;
+    childMax.y = ((child & 2) == 0) ? center.y    : parentMax.y;
+    childMin.z = ((child & 1) == 0) ? parentMin.z : center.z;
+    childMax.z = ((child & 1) == 0) ? center.z    : parentMax.z;
+}
+
+vec4 traverseOctree(vec3 ro, vec3 rd) {
+    float tEnterRoot, tExitRoot;
+    vec3 invRD = vec3(1.0) / rd; // Precompute reciprocal of the ray direction.
+    if (!intersectAABB(ro, rd, invRD, minBound, maxBound, tEnterRoot, tExitRoot)) {
+        return vec4(0.0);
+    }
+    
+    // Initialize a fixed-size stack for iterative traversal.
+    StackEntry stack[MAX_STACK_SIZE];
+    int stackSize = 0;
+    stack[stackSize++] = StackEntry(0, minBound, maxBound, tEnterRoot);
+    
+    float bestT = MAX_DIST;
+    vec4 hitColor = vec4(0.0);
+    
+    while (stackSize > 0) {
+        // Find the stack entry with the smallest tEnter.
+        int bestIndex = 0;
+        float currentBest = stack[0].tEnter;
+        for (int i = 1; i < stackSize; i++) {
+            if (stack[i].tEnter < currentBest) {
+                currentBest = stack[i].tEnter;
+                bestIndex = i;
+            }
+        }
+        
+        StackEntry entry = stack[bestIndex];
+        stack[bestIndex] = stack[stackSize - 1];
+        stackSize--;
+        
+        if (entry.tEnter > bestT)
+            continue;
+        
+        FlattenedNode node = nodes[entry.nodeIndex];
+
+        // Compute the node's center, size, and its distance from the camera.
+        vec3 nodeCenter = (entry.nodeMin + entry.nodeMax) * 0.5;
+        float distance = length(cameraPos - nodeCenter);
+        float nodeSize = length(entry.nodeMax - entry.nodeMin);
+        // Compute a simple LOD metric (larger ratio means the node is larger on screen).
+        // When the ratio is below the threshold, we consider this node detailed enough.
+        float lodMetric = nodeSize / max(distance, 0.001);
+        
+        // If the node is a leaf, or if the LOD metric is low enough, treat this node as a final hit.
+        if (node.IsLeaf || (!node.IsLeaf && lodMetric < lodThreshold)) {
+            float hitT = entry.tEnter;
+            vec3 hitPoint = ro + hitT * rd;
+            
+            // Compute a simple normal based on which face of the AABB is hit.
+            float distXMin = abs(hitPoint.x - entry.nodeMin.x);
+            float distXMax = abs(entry.nodeMax.x - hitPoint.x);
+            float distYMin = abs(hitPoint.y - entry.nodeMin.y);
+            float distYMax = abs(entry.nodeMax.y - hitPoint.y);
+            float distZMin = abs(hitPoint.z - entry.nodeMin.z);
+            float distZMax = abs(entry.nodeMax.z - hitPoint.z);
+            
+            vec3 normal = vec3(-1.0, 0.0, 0.0);
+            float minDist = distXMin;
+            if (distXMax < minDist) { minDist = distXMax; normal = vec3(1.0, 0.0, 0.0); }
+            if (distYMin < minDist) { minDist = distYMin; normal = vec3(0.0, -1.0, 0.0); }
+            if (distYMax < minDist) { minDist = distYMax; normal = vec3(0.0, 1.0, 0.0); }
+            if (distZMin < minDist) { minDist = distZMin; normal = vec3(0.0, 0.0, -1.0); }
+            if (distZMax < minDist) { minDist = distZMax; normal = vec3(0.0, 0.0, 1.0); }
+            
+            const vec3 sunDir = normalize(vec3(0.4, 1.0, -1.0));
+            float diffuse = max(dot(normal, sunDir), 0.0);
+            float ambient = 0.3;
+            float lighting = clamp(ambient + 0.7 * diffuse, 0.0, 1.0);
+            
+            hitColor = vec4(node.color.rgb * lighting, 1.0);
+            bestT = entry.tEnter;
+            break;
+        }
+        
+        // Otherwise, subdivide and traverse children.
+        for (int child = 0; child < 8; child++) {
+            int childIndex = node.childIndices[child];
+            if (childIndex == -1)
+                continue;
+            
+            vec3 childMin, childMax;
+            computeChildAABB(child, entry.nodeMin, entry.nodeMax, childMin, childMax);
+            
+            float tChildEnter, tChildExit;
+            if (intersectAABB(ro, rd, invRD, childMin, childMax, tChildEnter, tChildExit)) {
+                if (tChildEnter < bestT && stackSize < MAX_STACK_SIZE)
+                    stack[stackSize++] = StackEntry(childIndex, childMin, childMax, tChildEnter);
+            }
+        }
+    }
+    
+    return vec4(hitColor.xyz, 1.0);
 }
 
 void main() {
-    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
-    if (pixel.x >= int(iResolution.x) || pixel.y >= int(iResolution.y))
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    if (pixelCoords.x >= int(iResolution.x) || pixelCoords.y >= int(iResolution.y))
         return;
     
-    // Compute normalized UV coordinates.
-    vec2 uv = (vec2(pixel) / iResolution) * 2.0 - 1.0;
+    vec2 uv = (vec2(pixelCoords) / iResolution) * 2.0 - 1.0;
     uv.x *= iResolution.x / iResolution.y;
+    // Compute the ray direction in camera space using the field of view.
+    vec3 rayDirCamera = normalize(vec3(uv, -1.0 / tan(radians(fov * 0.5))));
+    mat3 invViewMatrix = mat3(transpose(viewMatrix));
+    vec3 rayDirWorld = normalize(invViewMatrix * rayDirCamera);
     
-    // Build per-pixel ray using a simple pinhole model.
-    vec3 forward = normalize(RayDir);
-    vec3 right = normalize(cross(forward, vec3(0.0, 1.0, 0.0)));
-    vec3 up = cross(right, forward);
-    const float halfFov = tan(radians(22.5)); // Half of 45° FOV.
-    vec3 rd = normalize(forward + uv.x * right * halfFov + uv.y * up * halfFov);
-    vec3 ro = CameraPos;
-    
-    // Compute grid axis-aligned bounding box.
-    vec3 gridMin = vec3(0.0);
-    vec3 gridMax = vec3(gridSize) * voxelSize;
-    
-    // Compute intersection of the ray with the grid's AABB using the slab method.
-    vec3 invRd = vec3(1.0) / rd;
-    vec3 t0 = (gridMin - ro) * invRd;
-    vec3 t1 = (gridMax - ro) * invRd;
-    vec3 tMinVec = min(t0, t1);
-    vec3 tMaxVec = max(t0, t1);
-    float tEntry = max(max(tMinVec.x, tMinVec.y), tMinVec.z);
-    float tExit = min(min(tMaxVec.x, tMaxVec.y), tMaxVec.z);
-    
-    // If there is no intersection, output the background color.
-    if (tExit < 0.0 || tEntry > tExit) {
-        imageStore(resultImage, pixel, vec4(0.678, 0.847, 0.902, 1.0));
-        return;
-    }
-    
-    // Start the ray at the grid entry point (or at the camera if already inside).
-    float t = max(tEntry, 0.0);
-    ro += t * rd;
-    const float epsilon = 0.0001; // Small offset to avoid precision issues at boundaries.
-    ro += rd * epsilon;
-    
-    ivec3 voxel = worldToGrid(ro);
-    
-    // Compute the next voxel boundary positions.
-    vec3 nextBoundary;
-    nextBoundary.x = (rd.x >= 0.0) ? (float(voxel.x + 1) * voxelSize) : (float(voxel.x) * voxelSize);
-    nextBoundary.y = (rd.y >= 0.0) ? (float(voxel.y + 1) * voxelSize) : (float(voxel.y) * voxelSize);
-    nextBoundary.z = (rd.z >= 0.0) ? (float(voxel.z + 1) * voxelSize) : (float(voxel.z) * voxelSize);
-    
-    // Precompute distances to the next boundaries (tMax) and per-voxel step distances (tDelta).
-    vec3 tMax = vec3(1e20);
-    tMax.x = (abs(rd.x) > 0.0) ? (nextBoundary.x - ro.x) * invRd.x : 1e20;
-    tMax.y = (abs(rd.y) > 0.0) ? (nextBoundary.y - ro.y) * invRd.y : 1e20;
-    tMax.z = (abs(rd.z) > 0.0) ? (nextBoundary.z - ro.z) * invRd.z : 1e20;
-    
-    vec3 tDelta;
-    tDelta.x = (abs(rd.x) > 0.0) ? voxelSize * abs(invRd.x) : 1e20;
-    tDelta.y = (abs(rd.y) > 0.0) ? voxelSize * abs(invRd.y) : 1e20;
-    tDelta.z = (abs(rd.z) > 0.0) ? voxelSize * abs(invRd.z) : 1e20;
-    
-    bool hit = false;
-    vec3 hitColor = vec3(0.0);
-    const int maxSteps = 700;
-    
-    // Traverse the voxel grid.
-    for (int i = 0; i < maxSteps; ++i) {
-        // If voxel is out-of-bounds, stop traversal.
-        if (voxel.x < 0 || voxel.x >= gridSize.x ||
-            voxel.y < 0 || voxel.y >= gridSize.y ||
-            voxel.z < 0 || voxel.z >= gridSize.z)
-        {
-            break;
-        }
-        // If the nearest voxel boundary is beyond the grid exit, stop.
-        if (min(tMax.x, min(tMax.y, tMax.z)) > tExit)
-            break;
-        int index = voxel.x + gridSize.x * voxel.y + gridXY * voxel.z;
-
-        if (isVoxelOccupied(index)) {
-            hit = true;
-            // Color the hit voxel based on its grid coordinates.
-            hitColor = vec3(voxelData[index].R,voxelData[index].G,voxelData[index].B);
-            break;
-        }
-        
-        // Branchless selection of the axis to step:
-        int axis = (tMax.x < tMax.y) ? ((tMax.x < tMax.z) ? 0 : 2)
-                                     : ((tMax.y < tMax.z) ? 1 : 2);
-        
-        // Update the voxel coordinate along the chosen axis.
-        voxel[axis] += (rd[axis] >= 0.0) ? 1 : -1;
-        tMax[axis] += tDelta[axis];
-    }
-    
-    // Output the color: hit color if an occupied voxel was found, else the background.
-    vec4 outColor = hit ? vec4(hitColor, 1.0) : vec4(0.678/2, 0.847/2, 0.902/2, 1.0);
-    imageStore(resultImage, pixel, outColor);
+    vec4 color = traverseOctree(cameraPos, rayDirWorld);
+    imageStore(resultImage, pixelCoords, color);
 }

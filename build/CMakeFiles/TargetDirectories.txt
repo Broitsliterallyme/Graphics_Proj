@@ -1,4 +1,4 @@
-/home/erectus/Documents/Test/build/CMakeFiles/GLAD.dir
-/home/erectus/Documents/Test/build/CMakeFiles/OpenGLExample.dir
-/home/erectus/Documents/Test/build/CMakeFiles/edit_cache.dir
-/home/erectus/Documents/Test/build/CMakeFiles/rebuild_cache.dir
+/home/erectus/Documents/Octree/build/CMakeFiles/GLAD.dir
+/home/erectus/Documents/Octree/build/CMakeFiles/OpenGLExample.dir
+/home/erectus/Documents/Octree/build/CMakeFiles/edit_cache.dir
+/home/erectus/Documents/Octree/build/CMakeFiles/rebuild_cache.dir
